@@ -1,0 +1,8 @@
+# budgetConf.rb
+# will become the config once I git gud with ruby
+
+ENV['user_name_pass'] = 'username:password'				# for example 'Krusher99:qwerty'
+ENV['org_user'] = 'MogulVegas'							# 'oreganizationName'
+ENV['repo_one'] = 'carepointe-webapp'					# 'repoName'
+ENV['repo_two'] = 'CarePointeVenderIOS'					# 'repoName'
+ENV['issue_state'] = 'closed'							# typically 'closed'
