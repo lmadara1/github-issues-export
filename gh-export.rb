@@ -3,63 +3,62 @@ require 'prawn'
 require_relative 'getMondaySince'
 require_relative 'budgetConf'
 
-# Edit these accordingly
-# TODO factor out into a separate config file
-ghUser = ENV['user_name_pass']		# 'username:password'
-orgUser = ENV['org_user']			# 'oreganizationName'
-repoOne = ENV['repo_one']			# 'repoName'
-repoTwo = ENV['repo_two']			# 'repoName'
-issueState = ENV['issue_state']		# 'closed'
-mondaySince = getMondaySin			# getMondaySince returns the Monday of the week in YYYY-MM-DDTHH:MM:SSZ
-i = 0								# issue count
+# Edit these variables from the budgetConf.rb file
+$ghUser = ENV['user_name_pass']
+$orgUser = ENV['org_user']
+repoOne = ENV['repo_one']
+repoTwo = ENV['repo_two']
+$issueState = ENV['issue_state']
+
+$mondaySince = getMondaySin			# getMondaySince returns the Monday of the week in YYYY-MM-DDTHH:MM:SSZ
 
 # Setup GitHub Session
-# TODO change to auth token
-github = Github.new basic_auth: ghUser
+$github = Github.new basic_auth: $ghUser
 
 # Setup PDF
-pdf = Prawn::Document.new
-pdf.font_families.update(
+$pdf = Prawn::Document.new
+$pdf.font_families.update(
 	"Roboto" => {
 		:normal => "Roboto-Regular.ttf",
 		:bold => "Roboto-Bold.ttf"
 	}
 )
-pdf.font "Roboto"
+$pdf.font "Roboto"
 
-# GET issues from repoOne and print
-# Finished Create titles
-# Finished adjust fonts and styling
-t = Time.parse(getMonday.to_s)
-pdf.text t.strftime("%B %e - ") + Time.now.strftime("%B %e, %Y"), :size => 20
-pdf.float do
-	pdf.move_down 30
-	github.issues.list user: orgUser,
-		repo: repoOne,
-		since: mondaySince,
-		state: issueState do |issue|
-			# Issue number and title
-			pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
+def pdfExport(repo)
+	i = 0
+	# Create PDF Header
+	t = Time.parse(getMonday.to_s)
+	$pdf.text "CarePointe Report", :size => 38
+	$pdf.text  t.strftime("%B %e - ") + Time.now.strftime("%B %e, %Y"), :size => 20
+	$pdf.move_down 20
 
-			# Issue description
-			# TODO handle html
-			pdf.text issue.body, :size => 10
-			pdf.pad_bottom(20) {}
-			i =  i + 1 #increment issue count
+	# Create PDF body
+	$pdf.float do
+		$pdf.move_down 38
+		$github.issues.list user: $orgUser,
+			repo: repo,
+			since: $mondaySince,
+			state: $issueState do |issue|
+				# Issue number and title
+				$pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
+
+				# Issue description
+				issueBod = issue.body.gsub(/<p>/,"\n")
+				$pdf.text issueBod.gsub(/[<]+(?<=<)[^>]+(?=>)+[>]/,''), :size => 10
+				$pdf.pad_bottom(20) {}
+				i =  i + 1 # increment issue count
+		end
 	end
+	# Export number of issues closed
+	$pdf.text i.to_s + " closed issues in " + repo, :size => 20
+	$pdf.stroke_horizontal_rule
 end
-pdf.text i.to_s + " closed issues"
-i = 0
 
-# GET issues from repoTwo
-# TODO remove this and loop it
-puts "\nCarepointeVendorIOS\n~~~~~~~~~~~~~~"
-github.issues.list user: orgUser, repo: repoOne, since: mondaySince, state: issueState do |issue|
-puts "\n#" + issue.number.to_s + " " + issue.title + "\n" + issue.body + "\n\n======"
-end
+pdfExport(repoOne)
+$pdf.start_new_page
+pdfExport(repoTwo)
 
 # render PDF
-# TODO programmatically create relevant file name ie. "Carepointe_Report_5-1_5-5.pdf"
 fileStr =  Time.now.strftime("Carepointe-Report--%m-%d-%Y.pdf")
-puts fileStr
-pdf.render_file "assignment.pdf"
+$pdf.render_file fileStr
