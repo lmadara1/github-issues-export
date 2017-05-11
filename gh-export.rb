@@ -49,6 +49,7 @@ def pdfExport(repo)
 				$pdf.pad_bottom(20) {}
 				i =  i + 1 # increment issue count
 		end
+		$pdf.start_new_page
 	end
 	# Export number of issues closed
 	$pdf.text i.to_s + " closed issues in " + repo, :size => 20
@@ -56,7 +57,7 @@ def pdfExport(repo)
 end
 
 pdfExport(repoOne)
-$pdf.start_new_page
+# $pdf.start_new_page
 pdfExport(repoTwo)
 
 # render PDF
