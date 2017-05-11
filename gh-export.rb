@@ -51,7 +51,7 @@ def pdfExport(repo)
 		$pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
 
 		# Issue description
-		issueBod = issue.body.gsub(/<p>/,"\n")
+		issueBod = issue.body.to_s.gsub(/<p>/,"\n")
 		$pdf.text issueBod.gsub(/[<]+(?<=<)[^>]+(?=>)+[>]/,''), :size => 10
 		$pdf.pad_bottom(20) {}
 	end

@@ -12,6 +12,6 @@ A Ruby script to automatically generate a report on the GitHub/Waffle issues tha
 2. run `bundle`
 3. copy and rename [budgetConf.rb.sample](https://github.com/MogulVegas/github-issues-export/blob/master/budgetConf.rb.sample) as budgeConf.rb and replace `'username:password'` with  login credentials that have access to the MogulVegas GitHub
 ## Usage
-From the main directory, run `ruby gh-export.rb`. This generates a PDF in the same directory that includes the titles and description of all of the issues that were closed since the Monday of the week to the current day. This pulls issues from both the webapp and vendorIOSapp repositories. The PDF is titled "Carepointe-Report--05-10-2017.pdf" (with corresponding date).
+From the main directory, run `ruby gh-export.rb`. This generates a PDF in the same directory that includes the titles and description of all of the issues that were closed within the time range of the Monday of the week up to the current day. This pulls issues from both the webapp and vendorIOSapp repositories. The PDF is titled "Carepointe-Report--05-10-2017.pdf" (with corresponding date).
 
 **WARNING** be sure to double check the titles and descriptions of the issues to make sure they make sense. 
