@@ -13,6 +13,7 @@ $issueState = ENV['issue_state']
 $mondaySince = getMondaySin			# getMondaySince returns the Monday of the week in YYYY-MM-DDTHH:MM:SSZ
 
 # Setup GitHub Session
+puts "beep boop: setting up GitHub API session"
 $github = Github.new basic_auth: $ghUser
 
 # Setup PDF
@@ -25,41 +26,50 @@ $pdf.font_families.update(
 )
 $pdf.font "Roboto"
 
+# Create PDF Header
+puts "beep boop: creating PDF"
+$pdf.text "CarePointe Report", :size => 38
+$pdf.text  getMonday.strftime("%B %e - ") + Time.now.strftime("%B %e, %Y"), :size => 20
+$pdf.move_down 20
+
+# Export function
 def pdfExport(repo)
-	i = 0
-	# Create PDF Header
-	t = Time.parse(getMonday.to_s)
-	$pdf.text "CarePointe Report", :size => 38
-	$pdf.text  t.strftime("%B %e - ") + Time.now.strftime("%B %e, %Y"), :size => 20
+	# Retrieve list of closed issues from API
+	ghList = $github.issues.list user: $orgUser,
+		repo: repo,
+		since: $mondaySince,
+		state: $issueState
+	
+	# Print header with number of issues closed
+	$pdf.text ghList.length.to_s + " closed issues in " + repo, :size => 20
+	$pdf.stroke_horizontal_rule
 	$pdf.move_down 20
 
-	# Create PDF body
-	$pdf.float do
-		$pdf.move_down 38
-		$github.issues.list user: $orgUser,
-			repo: repo,
-			since: $mondaySince,
-			state: $issueState do |issue|
-				# Issue number and title
-				$pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
+	# Print list
+	ghList.each do |issue|
+		# Issue number and title
+		$pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
 
-				# Issue description
-				issueBod = issue.body.gsub(/<p>/,"\n")
-				$pdf.text issueBod.gsub(/[<]+(?<=<)[^>]+(?=>)+[>]/,''), :size => 10
-				$pdf.pad_bottom(20) {}
-				i =  i + 1 # increment issue count
-		end
-		$pdf.start_new_page
+		# Issue description
+		issueBod = issue.body.gsub(/<p>/,"\n")
+		$pdf.text issueBod.gsub(/[<]+(?<=<)[^>]+(?=>)+[>]/,''), :size => 10
+		$pdf.pad_bottom(20) {}
 	end
-	# Export number of issues closed
-	$pdf.text i.to_s + " closed issues in " + repo, :size => 20
-	$pdf.stroke_horizontal_rule
 end
 
+# Call export function for both repos
 pdfExport(repoOne)
-# $pdf.start_new_page
+$pdf.start_new_page
 pdfExport(repoTwo)
 
-# render PDF
+# Render PDF
+puts "beep boop: exporting PDF"
 fileStr =  Time.now.strftime("Carepointe-Report--%m-%d-%Y.pdf")
 $pdf.render_file fileStr
+
+# Checking to see if file render was success
+if File.exist?(fileStr)
+	puts "beep boop: " + fileStr + " was created!"
+else
+	puts "beep boop: err... something didn't go right"
+end
