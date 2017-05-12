@@ -2,6 +2,7 @@ require 'github_api'
 require 'prawn'
 require_relative 'getMondaySince'
 require_relative 'budgetConf'
+require_relative 'recentEdit'
 
 # Edit these variables from the budgetConf.rb file
 $ghUser = ENV['user_name_pass']
@@ -33,8 +34,10 @@ $pdf.text  getMonday.strftime("%B %e - ") + Time.now.strftime("%B %e, %Y"), :siz
 $pdf.move_down 20
 
 # Export function
+# TODO move this function to different file
 def pdfExport(repo)
 	# Retrieve list of closed issues from API
+	# TODO error handling
 	ghList = $github.issues.list user: $orgUser,
 		repo: repo,
 		since: $mondaySince,
@@ -48,7 +51,7 @@ def pdfExport(repo)
 	# Print list
 	ghList.each do |issue|
 		# Issue number and title
-		$pdf.text "#" + issue.number.to_s + " " + issue.title, :size => 12, :style => :bold
+		$pdf.text "#" + issue.number.to_s + " " + issue.title.to_s, :size => 12, :style => :bold
 
 		# Issue description
 		issueBod = issue.body.to_s.gsub(/<p>/,"\n")
@@ -65,11 +68,23 @@ pdfExport(repoTwo)
 # Render PDF
 puts "beep boop: exporting PDF"
 fileStr =  Time.now.strftime("Carepointe-Report--%m-%d-%Y.pdf")
-$pdf.render_file fileStr
+# Finished add error catching
+begin
+	$pdf.render_file fileStr
+rescue Exception => e
+	case e
+	when Errno::EACCES
+		puts "BEEP BEEP BEEP! A PDF with the same name is open in another application. Please close and try again"
+	else
+		puts "BEEP BEEP BEEP! I don't even know..." + e.to_s
+	end
+end
+
 
 # Checking to see if file render was success
-if File.exist?(fileStr)
-	puts "beep boop: " + fileStr + " was created!"
+# Finished recent Edit check
+if recEdit(fileStr)
+	puts "beep boop: " + fileStr + " was generated!"
 else
-	puts "beep boop: err... something didn't go right"
+	puts "BEEP BEEP BEEP! err... something didn't go right"
 end

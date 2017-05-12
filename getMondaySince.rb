@@ -1,3 +1,5 @@
+# returns the Monday of the week in YYYY-MM-DDTHH:MM:SSZ
+
 def getMonday
 	d = Time.now
  	while d.monday? == false do
